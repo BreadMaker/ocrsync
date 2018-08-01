@@ -1,0 +1,36 @@
+{
+  "name": "ocrsync",
+  "version": "0.1.0",
+  "description": "Synchronizes with the OverClocked ReMix music repository.",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:BreadMaker/ocrsync.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "lint": "jshint src/js/index.js",
+    "build:css": "cat src/css/index.css | cleancss -O1 specialComments:0 -O2 restructureRules:on > css/index.min.css",
+    "watch:css": "watch 'npm run build:css' src/css/",
+    "prebuild:js": "npm run lint",
+    "build:js": "terser src/js/index.js --mangle -o js/index.min.js --comment --screw-ie8 --source-map \"filename='js/index.min.js.map', root='/', url='index.min.js.map'\"",
+    "watch:js": "watch 'npm run build:js' src/js/",
+    "build:html": "html-minifier --remove-comments --collapse-whitespace --minify-css --minify-js < src/html/index.html > index.html",
+    "watch:html": "watch 'npm run build:html' src/html/",
+    "build": "npm run build:css && npm run build:js && npm run build:html",
+    "build:watch": "run-p watch:**"
+  },
+  "author": "BreadMaker",
+  "license": "GPL-3.0",
+  "private": true,
+  "devDependencies": {
+    "clean-css-cli": "latest",
+    "electron": "latest",
+    "electron-dl": "latest",
+    "html-minifier": "latest",
+    "jshint": "latest",
+    "npm-run-all": "latest",
+    "terser": "latest",
+    "watch": "latest"
+  }
+}
