@@ -8,10 +8,13 @@ const {
 const {
     download
 } = require("electron-dl");
+const fs = require('fs'),
+    path = require('path'),
+    crypto = require('crypto');
 
 // Keep a global reference of the window object, if you don"t, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let win;
+let win, active = Array();
 
 function createWindow() {
     // Create the browser window.
@@ -29,6 +32,20 @@ function createWindow() {
     // Insert menu
     Menu.setApplicationMenu(mainMenu);
 
+    win.on("close", (e) => {
+        if (active.length > 0) {
+            var choice = dialog.showMessageBox(null, {
+                type: 'question',
+                buttons: ['Yes', 'No'],
+                title: 'Sync about to be interrupted',
+                message: 'There\'s a sync in progress.\nAre you sure you want to exit?'
+            })
+            if (choice == 1) {
+                e.preventDefault()
+            }
+        }
+    })
+
     // Emitted when the window is closed.
     win.on("closed", () => {
         // Dereference the window object, usually you would store windows
@@ -36,6 +53,65 @@ function createWindow() {
         // when you should delete the corresponding element.
         win = null
     })
+}
+
+function checkMD5(remix, filename, md5Sum, callback) {
+    win.webContents.send("OCR:MD5Check", remix, "start");
+    const hash = crypto.createHash('md5'),
+        input = fs.createReadStream(filename)
+    input.on('readable', () => {
+        const data = input.read()
+        if (data) hash.update(data)
+        else {
+            if (hash.digest('hex') === md5Sum) {
+                win.webContents.send("OCR:MD5Check", remix, "correct")
+                callback.correct()
+            } else {
+                win.webContents.send("OCR:MD5Check", remix, "mismatch")
+                callback.mismatch()
+            }
+        }
+    })
+}
+
+function downloadFile(remix, url, downloadFolder, md5Sum) {
+    download(win, url, {
+        directory: downloadFolder,
+        onStarted: function(item) {
+            active.push(remix)
+            ipcMain.on("OCR:StopSync", function() {
+                item.cancel()
+            })
+            item.once('done', (event, state) => {
+                if (state === 'completed') {
+                    checkMD5(remix, item.getSavePath(),
+                        md5Sum, {
+                            correct: function() {
+                                active = active.filter(
+                                    number =>
+                                    number !==
+                                    remix)
+                                return
+                            },
+                            mismatch: function() {
+                                return
+                            }
+                        })
+                } else {
+                    console.log(
+                        `Download failed: ${state}`
+                    )
+                }
+            })
+        },
+        onProgress: function(e) {
+            win.webContents.send("OCR:DownloadProgress",
+                e, remix);
+        },
+        onCancel: function() {
+            console.log("CANCELLED");
+        }
+    }).catch(console.error);
 }
 
 // This method will be called when Electron has finished
@@ -61,14 +137,28 @@ app.on("activate", () => {
 });
 
 // Catch URL to download
-ipcMain.on("OCR:URLReady", function(e, remix, url, downloadFolder) {
-    download(BrowserWindow.getFocusedWindow(), url, {
-        directory: downloadFolder,
-        onProgress: function(e) {
-            win.webContents.send("OCR:DownloadProgress", e, remix);
-        }
-    }).then(dl => console.log(
-        dl.getSavePath())).catch(console.error);
+ipcMain.on("OCR:URLReady", function(e, remix, url, downloadFolder, md5Sum) {
+    var filename = path.format({
+        dir: downloadFolder,
+        base: url.substring(url.lastIndexOf('/') + 1)
+    });
+    if (fs.existsSync(filename)) {
+        checkMD5(remix, filename, md5Sum, {
+            correct: function() {
+                active = active.filter(number => number !==
+                    remix)
+                return;
+            },
+            mismatch: function() {
+                fs.unlinkSync(filename)
+                downloadFile(remix, url, downloadFolder,
+                    md5Sum)
+            }
+        })
+    }
+    if (!fs.existsSync(filename)) {
+        downloadFile(remix, url, downloadFolder, md5Sum)
+    }
 });
 
 ipcMain.on("resize", function(e, x, y) {

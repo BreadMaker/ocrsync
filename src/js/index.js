@@ -6,7 +6,9 @@ const {
 
 var template = String(),
     latestOCR = Number(),
-    currentOCR = 3618;
+    currentOCR = localStorage.getItem("OCRCurrent") === null ? 3617 :
+    parseInt(localStorage.getItem("OCRCurrent")),
+    filesSynced = 0;
 
 $.fn.random = function() {
     return this.eq(Math.floor(Math.random() * this.length));
@@ -36,66 +38,52 @@ function getTextNodesIn(node, includeWhitespaceNodes) {
     return textNodes;
 }
 
+function updateSyncStatus() {
+    var OCRemixesToDownload = latestOCR - currentOCR;
+    if (OCRemixesToDownload === 0) {
+        $("#OCRSyncButton").attr("disabled", "disabled");
+        $("#OCRStatus").html(
+            "<i class='icons'><i class='green check icon'></i><i class='corner sync icon'></i></i> Synchronized"
+        );
+    } else if (OCRemixesToDownload > 0) {
+        $("#OCRSyncButton").removeAttr("disabled");
+        $("#OCRStatus").html(
+            "<i class='exclamation triangle icon'></i> Out of sync. " +
+            OCRemixesToDownload + " missing.");
+    } else {
+        $("#OCRSyncButton").attr("disabled", "disabled");
+        $("#OCRStatus").html(
+            "<i class='exclamation icon'></i> Something weird happened"
+        );
+    }
+}
+
 function checkSyncStatus() {
     $.get("http://ocremix.org/feeds/ten20/", function(data) {
         latestOCR = parseInt($(data).find("item:first link").text()
             .split("/")[4].replace("OCR", ""));
-        $("#last").text(latestOCR);
-        var OCRemixesToDownload = latestOCR - currentOCR;
-        if (OCRemixesToDownload === 0) {
-            $("#OCRStatus").html("SYNC");
-        } else if (OCRemixesToDownload > 0) {
-            $("#OCRStatus").html(
-                "<i class='exclamation triangle icon'></i> Out of sync. " +
-                OCRemixesToDownload + " missing.");
-        } else {
-            $("#OCRStatus").html("WEIRDERROR");
-        }
+        updateSyncStatus();
     }).fail(function() {
         $("#OCRStatus").html(
-            "<i class='exclamation icon'></i> Something weird happened"
+            "<i class='exclamation icon'></i> There was a problem trying to check sync status."
         );
     });
 }
 
-/* jshint ignore:start */
-async function startSync() {
-    // for (var i = currentOCR; i < latestOCR; i++) {
-    //     var OCRUrl = "http://ocremix.org/remix/OCR" + i.toString().padStart(
-    //         5, "0");
-    //     $.get(OCRUrl, function(data) {
-    //         var html = $(data, document.implementation.createHTMLDocument(
-    //             'virtual'));
-    //         var titleInfo = $(".color-secondary:contains('ReMix')",
-    //             html).parents("div:first");
-    //         var remixTitle = getTextNodesIn($("h1", titleInfo)[0]);
-    //         $("#OCRSyncProgressDetail").prepend(Mustache.render(
-    //             template, {
-    //                 remix: i,
-    //                 thumb: data.split('og:image" content="')[1]
-    //                     .split('"')[0].replace("ocremix.org",
-    //                         "ocremix.org/thumbs/100"),
-    //                 game: remixTitle[1].textContent,
-    //                 title: remixTitle[2].textContent + " " + $(
-    //                     "h2", titleInfo).text()
-    //             }));
-    //         ipcRenderer.send("OCR:URLReady", $("#modalDownload ul li a",
-    //             html).random()[0].href);
-    //     });
-    //     await sleep(1000);
-    // }
-    // Envía una transferencia de prueba
-    var i = 3618;
-    $.get("http://ocremix.org/remix/OCR" + i.toString().padStart(5, "0"),
-        function(data) {
-            // DocumentFragment tries to load images :(
+function downloadOCReMix() {
+    if (currentOCR < latestOCR) {
+        currentOCR = currentOCR + 1;
+        localStorage.setItem("OCRCurrent", currentOCR);
+        $.get("http://ocremix.org/remix/OCR" + currentOCR.toString().padStart(5,
+            "0"), function(data) {
+            // DocumentFragment will try to load images :(
             var html = $(data, document.implementation.createHTMLDocument());
             var titleInfo = $(".color-secondary:contains('ReMix')",
                 html).parents("div:first");
             var remixTitle = getTextNodesIn($("h1", titleInfo)[0]);
             $("#OCRSyncProgressDetail").prepend(Mustache.render(
                 template, {
-                    remix: i,
+                    remix: currentOCR,
                     thumb: data.split('og:image" content="')[1]
                         .split('"')[0].replace("ocremix.org",
                             "ocremix.org/thumbs/100"),
@@ -103,30 +91,17 @@ async function startSync() {
                     title: remixTitle[2].textContent + " " + $(
                         "h2", titleInfo).text()
                 }));
-            ipcRenderer.send("OCR:URLReady", i, $("#modalDownload ul li a",
-                html).random()[0].href, localStorage.getItem("OCRDirectory"));
+            ipcRenderer.send("OCR:URLReady", currentOCR, $(
+                "#modalDownload ul li a:not([href*='iterations'])",
+                html).random()[0].href, localStorage.getItem(
+                "OCRDirectory"), $("dl dt:contains('MD5')",
+                html).next("dd").text());
         });
-    // La lógica antigua de python, rehecha en 15 líneas
-    // for (i = currentOCR; i <= latestOCR; i++) {
-    //     var OCRUrl = "http://ocremix.org/remix/OCR" + i
-    //         .toString().padStart(5, "0");
-    //     $.ajax({
-    //         type: 'HEAD',
-    //         url: OCRUrl,
-    //         /* jshint ignore:start */
-    //         complete: function(xhr) {
-    //             console.log(xhr.getAllResponseHeaders());
-    //             Aquí va el ćodigo usado en la transferencia de prueba
-    //         },
-    //         error: function() {
-    //             console.error("ERROR fetching " +
-    //                 OCRUrl);
-    //         }
-    //         /* jshint ignore:end */
-    //     });
-    // }
+    } else if (currentOCR === latestOCR) {
+        $("#OCRSyncOverallStatus .header").text("Sync Complete");
+        $("#OCRCancelSyncButton button").attr("disabled", "disabled");
+    }
 }
-/* jshint ignore:end */
 
 var triangleArray = [];
 
@@ -317,8 +292,10 @@ function backToMainScreen() {
 }
 
 function initSync() {
-    if (localStorage.getItem("OCRDirectory") === null || localStorage.getItem(
-            "OCRTorrentStrat") === null) {
+    if (localStorage.getItem("OCRDirectory") === null
+        /* || localStorage.getItem(
+                    "OCRTorrentStrat") === null*/
+    ) {
         $("#OCRInitModal").modal({
             onApprove: function() {
                 showConfig(true);
@@ -327,6 +304,11 @@ function initSync() {
     } else {
         $(".modal").modal("hide");
         $("#OCRMainScreen").addClass("showingSync");
+        $("#OCRSyncOverallProgress .progress").progress({
+            label: 'ratio',
+            total: latestOCR - currentOCR
+        });
+        downloadOCReMix();
     }
 }
 
@@ -349,18 +331,31 @@ $(document).ready(function() {
     });
     var tempDownloadProgress = Number();
     ipcRenderer.on("OCR:DownloadProgress", function(e, progress, remix) {
-        console.log(remix, progress);
-        if (!(tempDownloadProgress === progress && progress ===
-                1)) {
-            $("#OCReMix-" + remix + " .progress").progress({
-                percent: progress * 100,
-                text: {
-                    active: 'xxx MB/s',
-                    success: 'Done!'
-                }
-            });
-        }
+        $("#OCReMix-" + remix + " .progress").progress({
+            percent: progress * 100
+        }).progress("set label", "Downloading");
         tempDownloadProgress = progress;
+    });
+    ipcRenderer.on("OCR:MD5Check", function(e, remix, status) {
+        switch (status) {
+            case "start":
+                $("#OCReMix-" + remix + " .progress").progress(
+                    "set label", "Checking Download");
+                break;
+            case "correct":
+                $("#OCReMix-" + remix + " .progress").progress(
+                    "set percent", 100).progress(
+                    "set label", "Download Completed!");
+                $("#OCRSyncOverallProgress .progress").progress(
+                    "set progress", filesSynced += 1);
+                updateSyncStatus();
+                downloadOCReMix();
+                break;
+            case "mismatch":
+                $("#OCReMix-" + remix + " .progress").progress(
+                    "set label", "Error: MD5 Mismatch");
+                break;
+        }
     });
     $("#OCRConfigButton").click(function() {
         showConfig(false);
@@ -378,10 +373,11 @@ $(document).ready(function() {
             $("#OCRDirectory").val(data[0]);
         }
     });
-    $("#OCRCancelSyncButton").click(function(e) {
-        e.preventDefault();
-        backToMainScreen();
-    });
+    // $("#OCRCancelSyncButton button").click(function(e) {
+    //     e.preventDefault();
+    //     ipcRenderer.send("OCR:StopSync");
+    //     backToMainScreen();
+    // });
     $("#OCRAboutButton").click(function() {
         $("#OCRAboutModal").modal("show");
     });
@@ -399,10 +395,10 @@ $(document).ready(function() {
     if (localStorage.getItem("OCRDirectory") !== null) {
         $("#OCRDirectory").val(localStorage.getItem("OCRDirectory"));
     }
-    if (localStorage.getItem("OCRTorrentStrat") !== null) {
-        $("#OCRTorrentStrat").val(localStorage.getItem(
-            "OCRTorrentStrat"));
-    }
+    // if (localStorage.getItem("OCRTorrentStrat") !== null) {
+    //     $("#OCRTorrentStrat").val(localStorage.getItem(
+    //         "OCRTorrentStrat"));
+    // }
     // Showing copyright year
     $(".current.year").text(new Date().getFullYear());
     // Capturing all links and launching default browser instead
@@ -418,10 +414,10 @@ $(document).ready(function() {
     }).click(function() {
         $('.shape').shape("flip back");
     });
-    $("#OCRTorrentStrat").dropdown({
-        onChange: function(val) {
-            localStorage.setItem("OCRTorrentStrat", val);
-        }
-    });
+    // $("#OCRTorrentStrat").dropdown({
+    //     onChange: function(val) {
+    //         localStorage.setItem("OCRTorrentStrat", val);
+    //     }
+    // });
     checkSyncStatus();
 });

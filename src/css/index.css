@@ -119,9 +119,22 @@ html, body {
     font-size: .9em;
 }
 
-#OCRSyncOverallProgress {}
+#OCRSyncOverall {
+    white-space: nowrap;
+}
 
-#OCRCancelSyncButton {}
+#OCRSyncOverallProgress {
+    width: 100%;
+}
+
+#OCRSyncOverallProgress .progress {
+    margin-bottom: 0;
+    margin-right: 5px;
+}
+
+#OCRCancelSyncButton {
+    white-space: nowrap;
+}
 
 .center.aligned {
     text-align: center !important;

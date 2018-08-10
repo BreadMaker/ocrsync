@@ -26,7 +26,7 @@
             <canvas id="OCRForegroundCanvas"></canvas>
             <div id="OCRInteractiveDiv">
                 <div id="OCRButtons" class="text-center">
-                    <button id="OCRSyncButton" type="button"
+                    <button id="OCRSyncButton" type="button" disabled
                         class="big ui inverted secondary button">
                         Sync
                     </button>
@@ -53,7 +53,7 @@
             <div class="content">
                 <form class="ui form">
                     <h4 class="ui dividing help header"
-                        data-html="Downloaded files will be saved in this folder. <b>Changing folder location will move downloaded files as well.</b>">
+                        data-html="Downloaded files will be saved in this folder. <b>Changing folder location is not supported yet.</b>">
                         Music Folder
                         <span class="target">
                             <i class="blue question circle icon"></i>
@@ -70,7 +70,7 @@
                             </button>
                         </div>
                     </div>
-                    <h4 class="ui dividing help header"
+                    <!-- <h4 class="ui dividing help header"
                         data-html="OverClocked ReMix recommends using torrents to save them bandwidth. <b>OCRSync will only download files not included in the torrents.</b>">
                         Torrent strategy
                         <span class="target">
@@ -86,7 +86,7 @@
                             <option value="2">Use external torrent
                                 application</option>
                         </select>
-                    </div>
+                    </div> -->
                 </form>
             </div>
             <div class="actions">
@@ -106,7 +106,7 @@
                         <div class="active side">
                             <p style="height:5px;"></p>
                             <p class="expletus"><b>OCRSync</b></p>
-                            <p>v0.1.0</p>
+                            <p>v0.2.0</p>
                             <p>Keeps you updated with the latest OverClocked
                                 ReMixes</p>
                             <p>Copyright &copy; 2012 - <span
@@ -142,13 +142,14 @@
             <div class="center aligned actions">
                 <div id="OCRCreditsButton"
                     class="ui inverted left floated basic button">Credits</div>
-                <div class="ui inverted orange animated fade basic button">
+                <a href="https://gitlab.com/breadmaker/ocrsync"
+                    class="ui inverted orange animated fade basic button">
                     <div class="visible content">Source code</div>
                     <div class="hidden content">
                         <i class="gitlab icon"></i>
                         @ GitLab
                     </div>
-                </div>
+                </a>
                 <div class="ui inverted primary ok right floated basic button">
                     OK</div>
             </div>
@@ -171,64 +172,35 @@
                 <div class="ui inverted primary ok button">OK</div>
             </div>
         </div>
-        <!-- <div class="modal fade" id="OCRAboutModal" tabindex="-1"
-            role="dialog" aria-labelledby="OCRAboutTitle" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="OCRAboutTitle">About</h5>
-                        <button type="button" class="close" data-dismiss="modal"
-                            aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <img src="img/logo.png" alt="">
-                        Lorem ipsum dolor sit amet, consectetur adipisicing
-                        elit. Nemo laborum inventore minima, sed a eius alias
-                        laudantium! Fuga asperiores iusto ad, officia, sit
-                        quasi, dolore minima maiores alias ratione eius.
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-dark"
-                            data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div> -->
         <div id="OCRSyncScreen"
             class="transparent ui basic segment OCRSecondaryScreen">
             <div id="OCRSyncProgressDetail"
                 class="ui divided unstackable items"></div>
-            <div id="OCRSyncOverallProgress" class="ui bottom fixed text menu">
-                <div class="header item">Sync in Progress</div>
-                <div class="right menu">
-                    <div class="item">
-                        <button id="OCRCancelSyncButton" type="button"
-                            class="ui inverted secondary right floated icon button">
-                            <i class="times icon"></i> Cancel
-                        </button>
-                    </div>
-                </div>
+            <div id="OCRSyncOverall" class="ui bottom fixed text menu">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td id="OCRSyncOverallStatus">
+                                <div class="header item">Sync in Progress</div>
+                            </td>
+                            <td id="OCRSyncOverallProgress">
+                                <div class="ui indicating progress">
+                                    <div class="bar">
+                                        <div class="progress"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <!-- <td id="OCRCancelSyncButton">
+                                <button type="button"
+                                    class="ui inverted red icon button">
+                                    <i class="times icon"></i> Cancel
+                                </button>
+                            </td> -->
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        <!-- <div class="jumbotron jumbotron-fluid">
-            <div class="container">
-                <h1 class="text-center">OCRSync</h1>
-                <p id="state" class="text-center lead">
-                    <i class="fas fa-spinner fa-pulse"></i> Connecting...
-                </p>
-            </div>
-        </div>
-        <div class="text-center">
-            <button type="button" class="btn btn-primary">
-                <i class="fas fa-sync"></i> Start sync
-            </button>
-        </div> -->
-        <!-- <p>
-            <span id="last">Loading...</span>
-            <progress id="progress" value="0" max="100"></progress>
-        </p> -->
         <script>
             if (typeof module === 'object') {
                 window.module = module;
