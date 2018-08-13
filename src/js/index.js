@@ -41,16 +41,19 @@ function getTextNodesIn(node, includeWhitespaceNodes) {
 function updateSyncStatus() {
     var OCRemixesToDownload = latestOCR - currentOCR;
     if (OCRemixesToDownload === 0) {
+        ipcRenderer.send("OCR:DisableSyncMenu");
         $("#OCRSyncButton").attr("disabled", "disabled");
         $("#OCRStatus").html(
             "<i class='icons'><i class='green check icon'></i><i class='corner sync icon'></i></i> Synchronized"
         );
     } else if (OCRemixesToDownload > 0) {
+        ipcRenderer.send("OCR:EnableSyncMenu");
         $("#OCRSyncButton").removeAttr("disabled");
         $("#OCRStatus").html(
             "<i class='exclamation triangle icon'></i> Out of sync. " +
             OCRemixesToDownload + " missing.");
     } else {
+        ipcRenderer.send("OCR:DisableSyncMenu");
         $("#OCRSyncButton").attr("disabled", "disabled");
         $("#OCRStatus").html(
             "<i class='exclamation icon'></i> Something weird happened"

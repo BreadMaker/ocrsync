@@ -21,16 +21,15 @@ function createWindow() {
     win = new BrowserWindow({
         width: 600,
         height: 500,
-        resizable: false
+        resizable: false,
+        icon: path.join(__dirname, 'assets/icon.png')
     })
 
     // and load the index.html of the app.
     win.loadFile("index.html")
 
-    // Build menu from template
-    const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
-    // Insert menu
-    Menu.setApplicationMenu(mainMenu);
+    // Build menu from template and insert menu
+    Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));
 
     win.on("close", (e) => {
         if (active.length > 0) {
@@ -174,14 +173,15 @@ ipcMain.on("OCR:SelectDirectory", function() {
 });
 
 // Creating menu template
-const mainMenuTemplate = [{
+let mainMenuTemplate = [{
     label: "File",
     submenu: [{
         label: "Sync",
         accelerator: "CommandOrControl+Y",
         click() {
             win.webContents.send("OCR:InitSync");
-        }
+        },
+        enabled: false
     }, {
         label: "Settings",
         accelerator: "CommandOrControl+S",
@@ -209,17 +209,27 @@ if (process.platform === "darwin") {
     mainMenuTemplate.unshift({});
 }
 
-if (process.env.NODE_ENV !== "production") {
-    mainMenuTemplate.push({
-        label: "DevTools",
-        submenu: [{
-            label: "Toggle",
-            accelerator: "F12",
-            click() {
-                win.webContents.toggleDevTools();
-            }
-        }, {
-            role: "reload"
-        }]
-    });
-}
+// if (process.env.NODE_ENV !== "development") {
+//     mainMenuTemplate.push({
+//         label: "DevTools",
+//         submenu: [{
+//             label: "Toggle",
+//             accelerator: "F12",
+//             click() {
+//                 win.webContents.toggleDevTools();
+//             }
+//         }, {
+//             role: "reload"
+//         }]
+//     });
+// }
+
+ipcMain.on("OCR:EnableSyncMenu", function() {
+    mainMenuTemplate[0].submenu[0].enabled = true;
+    Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));
+});
+
+ipcMain.on("OCR:DisableSyncMenu", function() {
+    mainMenuTemplate[0].submenu[0].enabled = false;
+    Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));
+});
