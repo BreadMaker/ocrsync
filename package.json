@@ -20,8 +20,8 @@
     "build": "npm run build:css && npm run build:js && npm run build:html",
     "build:watch": "run-p watch:**",
     "pack": "npm run pack:linux && npm run pack:win32",
-    "pack:linux": "electron-packager . --platform linux --icon ./assets/icon.png --out ./dist --overwrite; cd ./dist/ocrsync-linux-x64/; zip -r -y ../ocrsync-linux-x64.zip *; cd ..; rm -r ocrsync-linux-x64/",
-    "pack:win32": "electron-packager . --platform win32 --icon ./assets/icon.ico --out ./dist --win32metadata.CompanyName=\"C.T.M. Corp.\" --win32metadata.ProductName=\"OCRSync\" --win32metadata.FileDescription=\"Synchronizes with the OverClocked ReMix music repository.\" --overwrite; cd ./dist/; zip -r -y ocrsync-win32-x64.zip ocrsync-win32-x64/; rm -r ocrsync-win32-x64/"
+    "pack:linux": "electron-packager . --platform linux --icon ./assets/icon.png --out ./dist --overwrite; cd ./dist/ocrsync-linux-x64/; zip -FSr -y ../ocrsync-linux-x64.zip *; cd ..; rm -r ocrsync-linux-x64/",
+    "pack:win32": "electron-packager . --platform win32 --icon ./assets/icon.ico --out ./dist --win32metadata.CompanyName=\"C.T.M. Corp.\" --win32metadata.ProductName=\"OCRSync\" --win32metadata.FileDescription=\"Synchronizes with the OverClocked ReMix music repository.\" --overwrite; cd ./dist/; zip -FSr -y ocrsync-win32-x64.zip ocrsync-win32-x64/; rm -r ocrsync-win32-x64/"
   },
   "author": "BreadMaker",
   "license": "GPL-3.0",
