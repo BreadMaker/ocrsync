@@ -4,11 +4,13 @@ const {
     shell
 } = electron;
 
-var template = String(),
+let template = String(),
     latestOCR = Number(),
     currentOCR = localStorage.getItem("OCRCurrent") === null ? 3617 :
     parseInt(localStorage.getItem("OCRCurrent")),
-    filesSynced = 0;
+    filesSynced = 0,
+    animationIsEnabled = true,
+    now = Date();
 
 $.fn.random = function() {
     return this.eq(Math.floor(Math.random() * this.length));
@@ -38,6 +40,18 @@ function getTextNodesIn(node, includeWhitespaceNodes) {
     return textNodes;
 }
 
+function enableSyncIn30Seconds() {
+    var timeLeft = (30000 - parseInt(new Date() - now)) / 1000;
+    if (timeLeft > 0) {
+        $("#OCRRetryTime").html(parseInt(timeLeft) + "<small>" + (timeLeft % 1)
+            .toFixed(3).substring(1) + "</small>");
+        requestAnimationFrame(enableSyncIn30Seconds);
+    } else {
+        $("#OCRRetryMessage").removeClass("muted text").html(
+            "<a id='OCRRetry' href='#'>Check again?</a>");
+    }
+}
+
 function updateSyncStatus() {
     var OCRemixesToDownload = latestOCR - currentOCR;
     if (OCRemixesToDownload === 0) {
@@ -46,6 +60,10 @@ function updateSyncStatus() {
         $("#OCRStatus").html(
             "<i class='icons'><i class='green check icon'></i><i class='corner sync icon'></i></i> Synchronized"
         );
+        $("#OCRRetryMessage").html(
+            "Please wait <span id='OCRRetryTime'></span>s to check again.");
+        now = new Date();
+        enableSyncIn30Seconds();
     } else if (OCRemixesToDownload > 0) {
         ipcRenderer.send("OCR:EnableSyncMenu");
         $("#OCRSyncButton").removeAttr("disabled");
@@ -239,13 +257,14 @@ function initCanvas() {
     var delta;
 
     function animate() {
-        requestAnimationFrame(animate);
-        now = Date.now();
-        delta = now - then;
-
-        if (delta > interval) {
-            then = now - (delta % interval);
-            render();
+        if (animationIsEnabled) {
+            requestAnimationFrame(animate);
+            now = Date.now();
+            delta = now - then;
+            if (delta > interval) {
+                then = now - (delta % interval);
+                render();
+            }
         }
     }
 
@@ -291,7 +310,11 @@ function showConfig(goingToSync) {
 }
 
 function backToMainScreen() {
-    $("#OCRMainScreen").removeClass("showingSync");
+    animationIsEnabled = true;
+    $("#OCRMainScreen").removeClass("showingSync").one("transitionend",
+        function() {
+            // animate(); FUNCTION CALL FAILS: DEF IS INSIDE OTHER FUNC
+        });
 }
 
 function initSync() {
@@ -306,6 +329,7 @@ function initSync() {
         }).modal("show");
     } else {
         $(".modal").modal("hide");
+        animationIsEnabled = false;
         $("#OCRMainScreen").addClass("showingSync");
         $("#OCRSyncOverallProgress .progress").progress({
             label: 'ratio',
@@ -422,5 +446,11 @@ $(document).ready(function() {
     //         localStorage.setItem("OCRTorrentStrat", val);
     //     }
     // });
+    $("body").on("click", "#OCRRetry", function(e) {
+        e.preventDefault();
+        $("#OCRRetryMessage").empty().addClass("muted text");
+        $("#OCRStatus").html("<i class='asterisk loading icon'></i> Connecting&hellip;");
+        checkSyncStatus();
+    });
     checkSyncStatus();
 });

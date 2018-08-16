@@ -16,7 +16,7 @@
         <table id="OCRLoadingScreen">
             <tbody>
                 <tr><td>
-                    <i class="circle notch loading icon"></i> Allocating...
+                    <i class="circle notch loading icon"></i> Allocating&hellip;
                 </td></tr>
             </tbody>
         </table>
@@ -26,12 +26,17 @@
             <canvas id="OCRForegroundCanvas"></canvas>
             <div id="OCRInteractiveDiv">
                 <div id="OCRButtons" class="text-center">
-                    <button id="OCRSyncButton" type="button" disabled
-                        class="big ui inverted secondary button">
-                        Sync
-                    </button>
-                    <div id="OCRStatus" class="text-center">
-                        <i class="asterisk loading icon"></i> Connecting...
+                    <div id="OCRSyncButtonWrapper">
+                        <button id="OCRSyncButton" type="button" disabled
+                            class="big ui inverted secondary button">
+                            Sync
+                        </button>
+                    </div>
+                    <div id="OCRStatusWrapper" class="text-center">
+                        <div id="OCRStatus">
+                            <i class="asterisk loading icon"></i> Connecting&hellip;
+                        </div>
+                        <div id="OCRRetryMessage" class="muted text"></div>
                     </div>
                     <button id="OCRConfigButton" type="button"
                         class="ui inverted secondary icon button">

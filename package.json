@@ -8,7 +8,7 @@
     "url": "git@github.com:BreadMaker/ocrsync.git"
   },
   "scripts": {
-    "start": "electron .",
+    "start": "NODE_ENV=development electron .",
     "lint": "jshint src/js/index.js",
     "build:css": "cat src/css/index.css | cleancss -O1 specialComments:0 -O2 restructureRules:on > css/index.min.css",
     "watch:css": "watch 'npm run build:css' src/css/",

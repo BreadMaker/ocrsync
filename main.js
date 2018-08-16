@@ -209,20 +209,20 @@ if (process.platform === "darwin") {
     mainMenuTemplate.unshift({});
 }
 
-// if (process.env.NODE_ENV !== "development") {
-//     mainMenuTemplate.push({
-//         label: "DevTools",
-//         submenu: [{
-//             label: "Toggle",
-//             accelerator: "F12",
-//             click() {
-//                 win.webContents.toggleDevTools();
-//             }
-//         }, {
-//             role: "reload"
-//         }]
-//     });
-// }
+if (process.env.NODE_ENV === "development") {
+    mainMenuTemplate.push({
+        label: "DevTools",
+        submenu: [{
+            label: "Toggle",
+            accelerator: "F12",
+            click() {
+                win.webContents.toggleDevTools();
+            }
+        }, {
+            role: "reload"
+        }]
+    });
+}
 
 ipcMain.on("OCR:EnableSyncMenu", function() {
     mainMenuTemplate[0].submenu[0].enabled = true;

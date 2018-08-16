@@ -1,6 +1,7 @@
 html, body {
     height: 100%;
     overflow: hidden;
+    cursor: default;
 }
 
 .transparent {
@@ -66,7 +67,11 @@ html, body {
     padding-top: 200px;
 }
 
-#OCRStatus {
+#OCRSyncButton {
+    margin: 0;
+}
+
+#OCRStatusWrapper {
     margin-top: 40px;
 }
 
