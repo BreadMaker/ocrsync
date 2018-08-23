@@ -78,8 +78,10 @@ function downloadFile(remix, url, downloadFolder, md5Sum) {
         directory: downloadFolder,
         onStarted: function(item) {
             active.push(remix)
-            ipcMain.on("OCR:StopSync", function() {
+            ipcMain.once("OCR:StopSync", function() {
                 item.cancel()
+                active = active.filter(number => number !==
+                    remix)
             })
             item.once('done', (event, state) => {
                 if (state === 'completed') {
@@ -108,7 +110,7 @@ function downloadFile(remix, url, downloadFolder, md5Sum) {
                 e, remix);
         },
         onCancel: function() {
-            console.log("CANCELLED");
+            // console.log("CANCELLED");
         }
     }).catch(console.error);
 }

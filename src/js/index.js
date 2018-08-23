@@ -93,7 +93,7 @@ function checkSyncStatus() {
 
 function downloadOCReMix() {
     if (currentOCR < latestOCR) {
-        currentOCR = currentOCR + 1;
+        currentOCR +=  1;
         localStorage.setItem("OCRCurrent", currentOCR);
         $.get("http://ocremix.org/remix/OCR" + currentOCR.toString().padStart(5,
             "0"), function(data) {
@@ -289,6 +289,20 @@ function initCanvas() {
 
     introAnimate();
 
+    $("#OCRCancelSyncButton button").click(function(e) {
+        e.preventDefault();
+        currentOCR -= 1;
+        localStorage.setItem("OCRCurrent", currentOCR);
+        ipcRenderer.send("OCR:StopSync");
+        animationIsEnabled = true;
+        $("#OCRMainScreen").removeClass("showingSync").one(
+            "transitionend",
+            function() {
+                $("#OCRSyncProgressDetail").empty();
+                animate();
+            });
+    });
+
     $(window).resize(function() {
         bgCanvas.width = window.innerWidth;
         bgCanvas.height = window.innerHeight;
@@ -307,14 +321,6 @@ function showConfig(goingToSync) {
             }
         }
     }).modal("show");
-}
-
-function backToMainScreen() {
-    animationIsEnabled = true;
-    $("#OCRMainScreen").removeClass("showingSync").one("transitionend",
-        function() {
-            // animate(); FUNCTION CALL FAILS: DEF IS INSIDE OTHER FUNC
-        });
 }
 
 function initSync() {
@@ -400,11 +406,6 @@ $(document).ready(function() {
             $("#OCRDirectory").val(data[0]);
         }
     });
-    // $("#OCRCancelSyncButton button").click(function(e) {
-    //     e.preventDefault();
-    //     ipcRenderer.send("OCR:StopSync");
-    //     backToMainScreen();
-    // });
     $("#OCRAboutButton").click(function() {
         $("#OCRAboutModal").modal("show");
     });
@@ -449,7 +450,9 @@ $(document).ready(function() {
     $("body").on("click", "#OCRRetry", function(e) {
         e.preventDefault();
         $("#OCRRetryMessage").empty().addClass("muted text");
-        $("#OCRStatus").html("<i class='asterisk loading icon'></i> Connecting&hellip;");
+        $("#OCRStatus").html(
+            "<i class='asterisk loading icon'></i> Connecting&hellip;"
+        );
         checkSyncStatus();
     });
     checkSyncStatus();
