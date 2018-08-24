@@ -141,7 +141,7 @@ app.on("activate", () => {
 ipcMain.on("OCR:URLReady", function(e, remix, url, downloadFolder, md5Sum) {
     var filename = path.format({
         dir: downloadFolder,
-        base: url.substring(url.lastIndexOf('/') + 1)
+        base: decodeURI(url.substring(url.lastIndexOf('/') + 1))
     });
     if (fs.existsSync(filename)) {
         checkMD5(remix, filename, md5Sum, {
