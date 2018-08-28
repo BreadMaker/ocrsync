@@ -120,7 +120,8 @@ function downloadOCReMix() {
         });
     } else if (currentOCR === latestOCR) {
         $("#OCRSyncOverallStatus .header").text("Sync Complete");
-        $("#OCRCancelSyncButton button").attr("disabled", "disabled");
+        $("#OCRCancelSyncButton").hide();
+        $("#OCRDoneSyncButton").show();
     }
 }
 
@@ -289,11 +290,7 @@ function initCanvas() {
 
     introAnimate();
 
-    $("#OCRCancelSyncButton button").click(function(e) {
-        e.preventDefault();
-        currentOCR -= 1;
-        localStorage.setItem("OCRCurrent", currentOCR);
-        ipcRenderer.send("OCR:StopSync");
+    function runGoBackAnimation() {
         animationIsEnabled = true;
         $("#OCRMainScreen").removeClass("showingSync").one(
             "transitionend",
@@ -301,6 +298,19 @@ function initCanvas() {
                 $("#OCRSyncProgressDetail").empty();
                 animate();
             });
+    }
+
+    $("#OCRCancelSyncButton button").click(function(e) {
+        e.preventDefault();
+        currentOCR -= 1;
+        localStorage.setItem("OCRCurrent", currentOCR);
+        ipcRenderer.send("OCR:StopSync");
+        runGoBackAnimation();
+    });
+
+    $("#OCRDoneSyncButton button").click(function(e) {
+        e.preventDefault();
+        runGoBackAnimation();
     });
 
     $(window).resize(function() {
