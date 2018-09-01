@@ -95,6 +95,14 @@ function downloadFile(remix, url, downloadFolder, md5Sum) {
                                 return
                             },
                             mismatch: function() {
+                                // mismatched MD5 should also mean that the hash
+                                // informed is wrong, for now it'll show a
+                                // warning, but in the future it must offer
+                                // options to the user
+                                active = active.filter(
+                                    number =>
+                                    number !==
+                                    remix)
                                 return
                             }
                         })

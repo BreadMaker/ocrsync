@@ -1,6 +1,6 @@
 {
   "name": "ocrsync",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Synchronizes with the OverClocked ReMix music repository.",
   "main": "main.js",
   "repository": {

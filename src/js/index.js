@@ -93,7 +93,7 @@ function checkSyncStatus() {
 
 function downloadOCReMix() {
     if (currentOCR < latestOCR) {
-        currentOCR +=  1;
+        currentOCR += 1;
         localStorage.setItem("OCRCurrent", currentOCR);
         $.get("http://ocremix.org/remix/OCR" + currentOCR.toString().padStart(5,
             "0"), function(data) {
@@ -395,8 +395,14 @@ $(document).ready(function() {
                 downloadOCReMix();
                 break;
             case "mismatch":
-                $("#OCReMix-" + remix + " .progress").progress(
-                    "set label", "Error: MD5 Mismatch");
+                $("#OCReMix-" + remix + " .progress").addClass(
+                        "warning").progress("set percent", 100)
+                    .progress("set label",
+                        "Warning: MD5 Mismatch");
+                $("#OCRSyncOverallProgress .progress").progress(
+                    "set progress", filesSynced += 1);
+                updateSyncStatus();
+                downloadOCReMix();
                 break;
         }
     });
