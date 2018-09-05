@@ -10,15 +10,8 @@ let template = String(),
     parseInt(localStorage.getItem("OCRCurrent")),
     filesSynced = 0,
     animationIsEnabled = true,
-    now = Date();
-
-$.fn.random = function() {
-    return this.eq(Math.floor(Math.random() * this.length));
-};
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+    now = Date(),
+    db = new Dexie("OCRDB");
 
 function getTextNodesIn(node, includeWhitespaceNodes) {
     var textNodes = [],
@@ -95,28 +88,52 @@ function downloadOCReMix() {
     if (currentOCR < latestOCR) {
         currentOCR += 1;
         localStorage.setItem("OCRCurrent", currentOCR);
-        $.get("http://ocremix.org/remix/OCR" + currentOCR.toString().padStart(5,
-            "0"), function(data) {
-            // DocumentFragment will try to load images :(
-            var html = $(data, document.implementation.createHTMLDocument());
-            var titleInfo = $(".color-secondary:contains('ReMix')",
-                html).parents("div:first");
-            var remixTitle = getTextNodesIn($("h1", titleInfo)[0]);
+        db.remix.where({
+            number: currentOCR
+        }).first(item => {
             $("#OCRSyncProgressDetail").prepend(Mustache.render(
-                template, {
-                    remix: currentOCR,
-                    thumb: data.split('og:image" content="')[1]
-                        .split('"')[0].replace("ocremix.org",
+                template, item));
+            ipcRenderer.send("OCR:URLReady", currentOCR, item.links,
+                localStorage.getItem("OCRDirectory"), item.md5sum
+            );
+        }).catch(error => {
+            $.get("http://ocremix.org/remix/OCR" + currentOCR.toString()
+                .padStart(5, "0"),
+                function(data) {
+                    // DocumentFragment will try to load images :(
+                    var html = $(data, document.implementation.createHTMLDocument());
+                    var titleInfo = $(
+                        ".color-secondary:contains('ReMix')",
+                        html).parents("div:first");
+                    var remixTitle = getTextNodesIn($("h1",
+                        titleInfo)[0]);
+                    var remixObject = {
+                        number: currentOCR,
+                        thumb: data.split('og:image" content="')[
+                            1].split('"')[0].replace(
+                            "ocremix.org",
                             "ocremix.org/thumbs/100"),
-                    game: remixTitle[1].textContent,
-                    title: remixTitle[2].textContent + " " + $(
-                        "h2", titleInfo).text()
-                }));
-            ipcRenderer.send("OCR:URLReady", currentOCR, $(
-                "#modalDownload ul li a:not([href*='iterations'])",
-                html).random()[0].href, localStorage.getItem(
-                "OCRDirectory"), $("dl dt:contains('MD5')",
-                html).next("dd").text());
+                        game: remixTitle[1].textContent,
+                        title: remixTitle[2].textContent + " " +
+                            $("h2", titleInfo).text(),
+                        links: Array(),
+                        md5sum: $("dl dt:contains('MD5')", html)
+                            .next("dd").text()
+                    };
+                    $("#modalDownload ul li a", html).each(function() {
+                        if (!this.href.includes(
+                                "iterations")) {
+                            remixObject.links.push(this.href);
+                        }
+                    });
+                    $("#OCRSyncProgressDetail").prepend(Mustache.render(
+                        template, remixObject));
+                    db.remix.put(remixObject);
+                    ipcRenderer.send("OCR:URLReady", currentOCR,
+                        remixObject.links,
+                        localStorage.getItem("OCRDirectory"),
+                        remixObject.md5sum);
+                });
         });
     } else if (currentOCR === latestOCR) {
         $("#OCRSyncOverallStatus .header").text("Sync Complete");
@@ -356,6 +373,10 @@ function initSync() {
 }
 
 $(document).ready(function() {
+    db.version(1).stores({
+        remix: 'number,thumb,game,title,links,md5sum'
+    });
+    db.open();
     // Initialize template
     template = $("#OCRItemTemplate").html();
     // Initialize modals
@@ -372,12 +393,10 @@ $(document).ready(function() {
             initCanvas();
         }
     });
-    var tempDownloadProgress = Number();
     ipcRenderer.on("OCR:DownloadProgress", function(e, progress, remix) {
         $("#OCReMix-" + remix + " .progress").progress({
             percent: progress * 100
         }).progress("set label", "Downloading");
-        tempDownloadProgress = progress;
     });
     ipcRenderer.on("OCR:MD5Check", function(e, remix, status) {
         switch (status) {

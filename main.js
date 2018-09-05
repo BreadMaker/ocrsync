@@ -146,11 +146,12 @@ app.on("activate", () => {
 });
 
 // Catch URL to download
-ipcMain.on("OCR:URLReady", function(e, remix, url, downloadFolder, md5Sum) {
-    var filename = path.format({
-        dir: downloadFolder,
-        base: decodeURI(url.substring(url.lastIndexOf('/') + 1))
-    });
+ipcMain.on("OCR:URLReady", function(e, remix, urlList, downloadFolder, md5Sum) {
+    var url = urlList[Math.floor(Math.random() * urlList.length)],
+        filename = path.format({
+            dir: downloadFolder,
+            base: decodeURI(url.substring(url.lastIndexOf('/') + 1))
+        });
     if (fs.existsSync(filename)) {
         checkMD5(remix, filename, md5Sum, {
             correct: function() {
