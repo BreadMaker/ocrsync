@@ -12,8 +12,8 @@ const fs = require('fs'),
     path = require('path'),
     crypto = require('crypto');
 
-// Keep a global reference of the window object, if you don"t, the window will
-// be closed automatically when the JavaScript object is garbage collected.
+// Always keep a global reference of the window object, if you don"t, the window
+// will be closed automatically when the JavaScript object is garbage collected.
 let win, active = Array();
 
 function createWindow() {
@@ -63,10 +63,12 @@ function checkMD5(remix, filename, md5Sum, callback) {
         if (data) hash.update(data)
         else {
             if (hash.digest('hex') === md5Sum) {
-                win.webContents.send("OCR:MD5Check", remix, "correct")
+                win.webContents.send("OCR:MD5Check", remix, path.basename(
+                    filename), "correct")
                 callback.correct()
             } else {
-                win.webContents.send("OCR:MD5Check", remix, "mismatch")
+                win.webContents.send("OCR:MD5Check", remix, path.basename(
+                    filename), "mismatch")
                 callback.mismatch()
             }
         }
@@ -135,7 +137,7 @@ app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit()
     }
-});
+})
 
 app.on("activate", () => {
     // On macOS it"s common to re-create a window in the app when the
@@ -143,7 +145,7 @@ app.on("activate", () => {
     if (win === null) {
         createWindow()
     }
-});
+})
 
 // Catch URL to download
 ipcMain.on("OCR:URLReady", function(e, remix, urlList, downloadFolder, md5Sum) {
@@ -151,7 +153,7 @@ ipcMain.on("OCR:URLReady", function(e, remix, urlList, downloadFolder, md5Sum) {
         filename = path.format({
             dir: downloadFolder,
             base: decodeURI(url.substring(url.lastIndexOf('/') + 1))
-        });
+        })
     if (fs.existsSync(filename)) {
         checkMD5(remix, filename, md5Sum, {
             correct: function() {
@@ -169,11 +171,11 @@ ipcMain.on("OCR:URLReady", function(e, remix, urlList, downloadFolder, md5Sum) {
     if (!fs.existsSync(filename)) {
         downloadFile(remix, url, downloadFolder, md5Sum)
     }
-});
+})
 
 ipcMain.on("resize", function(e, x, y) {
     win.setSize(x, y);
-});
+})
 
 ipcMain.on("OCR:SelectDirectory", function() {
     win.webContents.send("OCR:DirectorySelected", dialog.showOpenDialog(
@@ -181,7 +183,7 @@ ipcMain.on("OCR:SelectDirectory", function() {
             title: "Select a folder",
             properties: ["openDirectory"]
         }));
-});
+})
 
 // Creating menu template
 let mainMenuTemplate = [{
@@ -217,7 +219,7 @@ let mainMenuTemplate = [{
 }];
 
 if (process.platform === "darwin") {
-    mainMenuTemplate.unshift({});
+    mainMenuTemplate.unshift({})
 }
 
 if (process.env.NODE_ENV === "development") {
@@ -232,15 +234,29 @@ if (process.env.NODE_ENV === "development") {
         }, {
             role: "reload"
         }]
-    });
+    })
 }
 
 ipcMain.on("OCR:EnableSyncMenu", function() {
     mainMenuTemplate[0].submenu[0].enabled = true;
     Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));
-});
+})
 
 ipcMain.on("OCR:DisableSyncMenu", function() {
     mainMenuTemplate[0].submenu[0].enabled = false;
     Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));
-});
+})
+
+ipcMain.on("OCR:MoveFiles", function(e, orig, dest, filenames) {
+    filenames.forEach(function(filename) {
+        fs.rename(path.format({
+            dir: orig,
+            base: filename
+        }), path.format({
+            dir: dest,
+            base: filename
+        }), (err) => {
+            if (err) throw err;
+        })
+    })
+})

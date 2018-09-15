@@ -58,7 +58,7 @@
             <div class="content">
                 <form class="ui form">
                     <h4 class="ui dividing help header"
-                        data-html="Downloaded files will be saved in this folder. <b>Changing folder location is not supported yet.</b>">
+                        data-html="Downloaded files will be saved in this folder. <b>Changing folder location will move downloaded files as well.</b>">
                         Music Folder
                         <span class="target">
                             <i class="blue question circle icon"></i>
@@ -67,7 +67,7 @@
                     <div class="field">
                         <div class="ui action left icon input">
                             <i class="folder open outline icon"></i>
-                            <input id="OCRDirectory" type="text"
+                            <input id="OCRDirectory" type="text" readonly
                                 placeholder="Select a folder">
                             <button id="OCRSelectDirectoryButton" type="button"
                                 class="ui button">
@@ -111,7 +111,7 @@
                         <div class="active side">
                             <p style="height:5px;"></p>
                             <p class="expletus"><b>OCRSync</b></p>
-                            <p>v0.3.4</p>
+                            <p>v0.3.5</p>
                             <p>Keeps you updated with the latest OverClocked
                                 ReMixes</p>
                             <p>Copyright &copy; 2012 - <span
@@ -167,7 +167,7 @@
             <div class="center aligned content">
                 <h3 class="ui icon header">
                     <i class="horizontally flipped hand paper outline icon"></i>
-                    <div class="content">¡Hold your horses!</div>
+                    <span class="content">¡Hold your horses!</span>
                 </h3>
                 <p>You must first configure OCRSync before the initial
                     synchronization.</p>
@@ -233,10 +233,12 @@
         <script src="https://cdn.rawgit.com/janl/mustache.js/v2.3.0/mustache.min.js"
             integrity="sha384-wlIoxluAn4R0ncWYWAibi4AATy1rxh4LzxfPhzhRfBwpYzbAQT7FDApW3TTf4KC+"
             crossorigin="anonymous"></script>
-        <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+        <script src="https://unpkg.com/dexie@2.0.4/dist/dexie.min.js"
+            integrity="sha384-10570gylTHuA/q6VvNZMuML9ZozqzAfygyBL+P2y0xzYis5EkqeKCl5Tr8Q1WqhD"
+            crossorigin="anonymous"></script>
         <script src="js/index.min.js"></script>
         <script>if (window.module) module = window.module;</script>
-        <script id="OCRItemTemplate" type="x-tmpl-mustache">
+        <script id="OCRItemTemplate" type="text/x-tmpl-mustache">
             <div id="OCReMix-{{ number }}" class="item">
                 <div class="ui image">
                     <img src="{{ thumb }}">

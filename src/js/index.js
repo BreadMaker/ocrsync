@@ -69,6 +69,10 @@ function updateSyncStatus() {
         $("#OCRStatus").html(
             "<i class='exclamation icon'></i> Something weird happened"
         );
+        $("#OCRRetryMessage").html(
+            "Please wait <span id='OCRRetryTime'></span>s to check again.");
+        now = new Date();
+        enableSyncIn30Seconds();
     }
 }
 
@@ -81,6 +85,11 @@ function checkSyncStatus() {
         $("#OCRStatus").html(
             "<i class='exclamation icon'></i> There was a problem trying to check sync status."
         );
+        $("#OCRRetryMessage").html(
+            "Please wait <span id='OCRRetryTime'></span>s to check again."
+        );
+        now = new Date();
+        enableSyncIn30Seconds();
     });
 }
 
@@ -101,25 +110,25 @@ function downloadOCReMix() {
                 .padStart(5, "0"),
                 function(data) {
                     // DocumentFragment will try to load images :(
-                    var html = $(data, document.implementation.createHTMLDocument());
-                    var titleInfo = $(
-                        ".color-secondary:contains('ReMix')",
-                        html).parents("div:first");
-                    var remixTitle = getTextNodesIn($("h1",
-                        titleInfo)[0]);
-                    var remixObject = {
-                        number: currentOCR,
-                        thumb: data.split('og:image" content="')[
-                            1].split('"')[0].replace(
-                            "ocremix.org",
-                            "ocremix.org/thumbs/100"),
-                        game: remixTitle[1].textContent,
-                        title: remixTitle[2].textContent + " " +
-                            $("h2", titleInfo).text(),
-                        links: Array(),
-                        md5sum: $("dl dt:contains('MD5')", html)
-                            .next("dd").text()
-                    };
+                    var html = $(data, document.implementation.createHTMLDocument()),
+                        titleInfo = $(
+                            ".color-secondary:contains('ReMix')",
+                            html).parents("div:first"),
+                        remixTitle = getTextNodesIn($("h1",
+                            titleInfo)[0]),
+                        remixObject = {
+                            number: currentOCR,
+                            thumb: data.split('og:image" content="')[
+                                1].split('"')[0].replace(
+                                "ocremix.org",
+                                "ocremix.org/thumbs/100"),
+                            game: remixTitle[1].textContent,
+                            title: remixTitle[2].textContent + " " +
+                                $("h2", titleInfo).text(),
+                            links: Array(),
+                            md5sum: $("dl dt:contains('MD5')", html)
+                                .next("dd").text()
+                        };
                     $("#modalDownload ul li a", html).each(function() {
                         if (!this.href.includes(
                                 "iterations")) {
@@ -142,7 +151,7 @@ function downloadOCReMix() {
     }
 }
 
-var triangleArray = [];
+let triangleArray = [];
 
 function initCanvas() {
     $("#OCRLoadingScreen").remove();
@@ -268,11 +277,10 @@ function initCanvas() {
         }
     }
 
-    var fps = 30;
-    var now;
-    var then = Date.now();
-    var interval = 1000 / fps;
-    var delta;
+    let fps = 15,
+        now, then = Date.now(),
+        interval = 1000 / fps,
+        delta;
 
     function animate() {
         if (animationIsEnabled) {
@@ -372,9 +380,16 @@ function initSync() {
     }
 }
 
+function moveFiles(orig, dest) {
+    // SHOW MODAL, SHOW PREPARING MESSAGE
+    db.remix.orderBy("filename").keys(function(filenames) {
+        ipcRenderer.send("OCR:MoveFiles", orig, dest, filenames);
+    });
+}
+
 $(document).ready(function() {
     db.version(1).stores({
-        remix: 'number,thumb,game,title,links,md5sum'
+        remix: 'number,thumb,game,title,links,filename,md5sum'
     });
     db.open();
     // Initialize template
@@ -398,7 +413,7 @@ $(document).ready(function() {
             percent: progress * 100
         }).progress("set label", "Downloading");
     });
-    ipcRenderer.on("OCR:MD5Check", function(e, remix, status) {
+    ipcRenderer.on("OCR:MD5Check", function(e, remix, filename, status) {
         switch (status) {
             case "start":
                 $("#OCReMix-" + remix + " .progress").progress(
@@ -410,6 +425,9 @@ $(document).ready(function() {
                     "set label", "Download Completed!");
                 $("#OCRSyncOverallProgress .progress").progress(
                     "set progress", filesSynced += 1);
+                db.remix.update(remix, {
+                    "filename": filename
+                });
                 updateSyncStatus();
                 downloadOCReMix();
                 break;
@@ -420,6 +438,9 @@ $(document).ready(function() {
                         "Warning: MD5 Mismatch");
                 $("#OCRSyncOverallProgress .progress").progress(
                     "set progress", filesSynced += 1);
+                db.remix.update(remix, {
+                    "filename": filename
+                });
                 updateSyncStatus();
                 downloadOCReMix();
                 break;
@@ -437,6 +458,10 @@ $(document).ready(function() {
     });
     ipcRenderer.on("OCR:DirectorySelected", function(e, data) {
         if (data !== null) {
+            if (localStorage.getItem("OCRDirectory") !== null) {
+                moveFiles(localStorage.getItem("OCRDirectory"),
+                    data[0]);
+            }
             localStorage.setItem("OCRDirectory", data[0]);
             $("#OCRDirectory").val(data[0]);
         }
