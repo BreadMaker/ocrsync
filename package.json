@@ -28,7 +28,7 @@
   "private": true,
   "devDependencies": {
     "clean-css-cli": "^4.2.1",
-    "electron": "^2.0.9",
+    "electron": "^35.7.5",
     "electron-packager": "^12.1.2",
     "html-minifier": "^3.5.20",
     "jshint": "^2.9.6",
