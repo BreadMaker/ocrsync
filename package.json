@@ -29,7 +29,7 @@
   "devDependencies": {
     "clean-css-cli": "^4.2.1",
     "electron": "^2.0.9",
-    "electron-packager": "^12.1.2",
+    "electron-packager": "^17.1.2",
     "html-minifier": "^3.5.20",
     "jshint": "^2.9.6",
     "npm-run-all": "^4.1.3",
