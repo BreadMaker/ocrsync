@@ -1,6 +1,6 @@
 {
   "name": "ocrsync",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Synchronizes with the OverClocked ReMix music repository.",
   "main": "main.js",
   "repository": {
@@ -20,7 +20,7 @@
     "build": "npm run build:css && npm run build:js && npm run build:html",
     "build:watch": "run-p watch:**",
     "pack": "npm run pack:linux && npm run pack:win32",
-    "pack:linux": "electron-packager . --platform linux --icon ./assets/icon.png --out ./dist --overwrite; cd ./dist/ocrsync-linux-x64/; zip -FSr -y ../ocrsync-linux-x64.zip *; cd ..; rm -r ocrsync-linux-x64/",
+    "pack:linux": "electron-packager . --platform linux --icon ./assets/icon.png --out ./dist --overwrite; zip -FSr -y ocrsync-linux-x64.zip *; mv ocrsync-linux-x64.zip ./dist",
     "pack:win32": "electron-packager . --platform win32 --icon ./assets/icon.ico --out ./dist --win32metadata.CompanyName=\"C.T.M. Corp.\" --win32metadata.ProductName=\"OCRSync\" --win32metadata.FileDescription=\"Synchronizes with the OverClocked ReMix music repository.\" --overwrite; cd ./dist/; zip -FSr -y ocrsync-win32-x64.zip ocrsync-win32-x64/; rm -r ocrsync-win32-x64/"
   },
   "author": "BreadMaker",
@@ -29,7 +29,7 @@
   "devDependencies": {
     "@electron/packager": "^19.0.1",
     "cssnano": "^7.1.2",
-    "electron": "^39.8.5",
+    "electron": "^39.8.10",
     "esbuild": "^0.28.1",
     "eslint": "^9.39.2",
     "html-minifier-next": "^4.16.4",
@@ -40,5 +40,9 @@
   },
   "dependencies": {
     "electron-dl": "^1.14.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "electron@39.8.10": true
   }
 }
